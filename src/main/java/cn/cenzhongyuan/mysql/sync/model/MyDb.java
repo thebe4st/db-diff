@@ -7,6 +7,8 @@ import lombok.Cleanup;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
 
 public class MyDb {
 
@@ -79,6 +81,24 @@ public class MyDb {
         return "";
     }
 
-
+    public Integer getLastVersion() {
+        try {
+            @Cleanup Connection connection = null;
+            @Cleanup Statement statement = null;
+            @Cleanup ResultSet res = null;
+            connection = getConnection();
+            statement = connection.createStatement();
+            res = statement.executeQuery(String.format("SELECT MAX(`version`) FROM `flyway_schema_history`"));
+            if(res.next()) {
+                ResultSetMetaData rsmd = res.getMetaData();
+                return Optional.ofNullable(res.getInt(rsmd.getColumnLabel(1))).orElse(1);
+            }else {
+                throw new RuntimeException(String.format("get last version failed"));
+            }
+        } catch (SQLException e) {
+        }
+        System.out.println(String.format("get last version failed"));
+        return 1;
+    }
 
 }

@@ -2,7 +2,9 @@ package org.example;
 
 import static org.junit.Assert.assertTrue;
 
+import cn.cenzhongyuan.mysql.sync.SchemaSyncConfig;
 import cn.cenzhongyuan.mysql.sync.model.DbIndex;
+import cn.cenzhongyuan.mysql.sync.model.SchemaSync;
 import org.junit.Test;
 
 /**
@@ -10,14 +12,24 @@ import org.junit.Test;
  */
 public class AppTest 
 {
+    private static SchemaSyncConfig config = null;
+    static
     {
-          String sourceDbUrl = "jdbc:mysql://192.168.1.201/guest";
-          String sourceDbUser = "admin";
-          String sourceDbPwd = "123456";
+        String sourceDbUrl = "jdbc:mysql://192.168.1.201/nlp_customer";
+        String sourceDbUser = "admin";
+        String sourceDbPwd = "123456";
 
-          String destDbUrl = "jdbc:mysql://192.168.1.201/guest_replication";
-          String destDbUser = "admin";
-          String destDbPwd = "123456";
+        String destDbUrl = "jdbc:mysql://192.168.1.201/guest_replication";
+        String destDbUser = "admin";
+        String destDbPwd = "123456";
+        config = new SchemaSyncConfig();
+        config.setDestDbPwd(destDbPwd);
+        config.setDestDbUrl(destDbUrl);
+        config.setDestDbUser(destDbUser);
+
+        config.setSourceDbPwd(sourceDbPwd);
+        config.setSourceDbUser(sourceDbUser);
+        config.setSourceDbUrl(sourceDbUrl);
 
     }
     /**
@@ -40,7 +52,13 @@ public class AppTest
             }
             System.out.println(dbIndex);
         }
+    }
 
+    @Test
+    public void getVersionTest() {
+
+        SchemaSync schemaSync = new SchemaSync(config);
+        System.out.println(schemaSync.getSourceDb().getLastVersion());
 
     }
 }

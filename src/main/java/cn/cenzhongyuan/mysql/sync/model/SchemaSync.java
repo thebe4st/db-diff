@@ -6,12 +6,9 @@ import cn.cenzhongyuan.mysql.sync.enumeration.DbType;
 import lombok.Data;
 import org.apache.commons.lang3.StringUtils;
 
-import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 @Data
