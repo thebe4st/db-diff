@@ -3,7 +3,7 @@ package org.example;
 import static org.junit.Assert.assertTrue;
 
 import cn.cenzhongyuan.mysql.sync.SchemaSyncConfig;
-import cn.cenzhongyuan.mysql.sync.model.DbIndex;
+import cn.cenzhongyuan.mysql.sync.model.Index;
 import cn.cenzhongyuan.mysql.sync.model.SchemaSync;
 import org.junit.Test;
 
@@ -46,7 +46,7 @@ public class AppTest
                 "CONSTRAINT `busi_table_ibfk_1` FOREIGN KEY (`repo_id`) REFERENCES `repo_table` (`repo_id`)"
         };
         for (String sql : sqls) {
-            DbIndex dbIndex = DbIndex.parseDbIndexLine(sql);
+            Index dbIndex = Index.parseDbIndexLine(sql);
             if(dbIndex == null) {
                 throw new RuntimeException();
             }

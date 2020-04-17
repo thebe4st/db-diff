@@ -10,24 +10,24 @@ import java.util.List;
 import java.util.Map;
 
 @Data
-public class TableSchema {
+public class Table {
 
     private String schemaRaw;
 
     private Map<String,String> fields = new HashMap<>();
 
-    private Map<String,DbIndex> indexAll = new HashMap<>();
+    private Map<String, Index> indexAll = new HashMap<>();
 
-    private Map<String,DbIndex> foreignAll = new HashMap<>();
+    private Map<String, Index> foreignAll = new HashMap<>();
 
-    public TableSchema(String schemaRaw) {
+    public Table(String schemaRaw) {
         this.schemaRaw = schemaRaw;
     }
 
-    public static TableSchema parseSchema(String schema) {
+    public static Table parseSchema(String schema) {
         schema = schema.trim();
         String[] lines = schema.split("\n");
-        TableSchema ret = new TableSchema(schema);
+        Table ret = new Table(schema);
 
         for(int i = 1; i < lines.length - 1; i++) {
             String line = lines[i].trim();
@@ -41,7 +41,7 @@ public class TableSchema {
                 String name = line.substring(1,index + 1);
                 ret.getFields().put(name,line);
             } else {
-                DbIndex dbIndex = DbIndex.parseDbIndexLine(line);
+                Index dbIndex = Index.parseDbIndexLine(line);
                 if(dbIndex == null) {
                     continue;
                 }

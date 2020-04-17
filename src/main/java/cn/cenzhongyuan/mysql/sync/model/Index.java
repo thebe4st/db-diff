@@ -12,7 +12,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 @Data
-public class DbIndex {
+public class Index {
 
     private IndexType indexType;
 
@@ -23,13 +23,13 @@ public class DbIndex {
     // 相关联的表
     private List<String> relationTables = new ArrayList<>();
 
-    public DbIndex(String sql) {
+    public Index(String sql) {
         this.sql = sql;
     }
 
-    public static DbIndex parseDbIndexLine(String line) {
+    public static Index parseDbIndexLine(String line) {
         line = line.trim();
-        DbIndex idx = new DbIndex(line);
+        Index idx = new Index(line);
 
         if (line.startsWith("PRIMARY")) {
             idx.setIndexType(IndexType.PRIMARY);

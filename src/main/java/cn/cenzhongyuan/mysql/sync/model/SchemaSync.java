@@ -16,14 +16,14 @@ public class SchemaSync {
 
     private SchemaSyncConfig config;
 
-    private MyDb sourceDb;
+    private Db sourceDb;
 
-    private MyDb destDb;
+    private Db destDb;
 
     public SchemaSync(SchemaSyncConfig config) {
         this.config = config;
-        this.sourceDb = new MyDb(config.getSourceDbUser(),config.getSourceDbPwd(),config.getSourceDbUrl(), DbType.SOURCE);
-        this.destDb = new MyDb(config.getDestDbUser(),config.getDestDbPwd(),config.getDestDbUrl(), DbType.DEST);
+        this.sourceDb = new Db(config.getSourceDbUser(),config.getSourceDbPwd(),config.getSourceDbUrl(), DbType.SOURCE);
+        this.destDb = new Db(config.getDestDbUser(),config.getDestDbPwd(),config.getDestDbUrl(), DbType.DEST);
     }
 
     public void tableAlter2SQLFile(List<TableAlter> data,String path) {
@@ -127,8 +127,8 @@ public class SchemaSync {
     }
 
     public String getSchemaDiff(TableAlter alter) {
-        TableSchema sourceMyS = alter.getSchemaDiff().getSource();
-        TableSchema destMyS = alter.getSchemaDiff().getDest();
+        Table sourceMyS = alter.getSchemaDiff().getSource();
+        Table destMyS = alter.getSchemaDiff().getDest();
         String table = alter.getTable();
 
         List<String> alterLines = new ArrayList<>();
@@ -171,7 +171,7 @@ public class SchemaSync {
         // 比对索引
         sourceMyS.getIndexAll().forEach((index,idx) -> {
             boolean has = destMyS.getIndexAll().containsKey(index);
-            DbIndex dIdx = destMyS.getIndexAll().get(index);
+            Index dIdx = destMyS.getIndexAll().get(index);
             System.out.println(String.format("trace indexName---->[ %s.%s ] dest_has:%s\ndest_idx:%s\nsource_idx:%s", table, index, has, dIdx, idx));
             String alterSQL = "";
             if(has) {

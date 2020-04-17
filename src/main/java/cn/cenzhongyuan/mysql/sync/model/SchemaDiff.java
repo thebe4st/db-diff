@@ -9,13 +9,13 @@ import java.util.List;
 public class SchemaDiff {
 
     private String table;
-    private TableSchema source;
-    private TableSchema dest;
+    private Table source;
+    private Table dest;
 
     public SchemaDiff(String table,String source,String dest) {
         this.table = table;
-        this.source = TableSchema.parseSchema(source);
-        this.dest = TableSchema.parseSchema(dest);
+        this.source = Table.parseSchema(source);
+        this.dest = Table.parseSchema(dest);
     }
 
     public List<String> getRelationTables() {

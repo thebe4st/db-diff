@@ -10,14 +10,14 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
-public class MyDb {
+public class Db {
 
     private String user;
     private String pwd;
     private String url;
     private DbType dbType;
 
-    public MyDb(String user, String pwd, String url,DbType dbType) {
+    public Db(String user, String pwd, String url, DbType dbType) {
         this.user = user;
         this.pwd = pwd;
         this.url = url;
