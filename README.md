@@ -1,5 +1,6 @@
 # db-diff
 compare database differences
+normal use it with Flyway
 ## quick start
 ```java
     // 生成差异SQL
