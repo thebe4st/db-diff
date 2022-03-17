@@ -53,7 +53,7 @@ public class Db {
     }
 
     @SneakyThrows
-    public String getTableSchema(String name) {
+    public Table getTable(String name) {
         @Cleanup Connection connection = null;
         @Cleanup Statement statement = null;
         @Cleanup ResultSet res = null;
@@ -62,7 +62,7 @@ public class Db {
         res = statement.executeQuery(sql().tableSchema(name));
         if (res.next()) {
             ResultSetMetaData rsmd = res.getMetaData();
-            return res.getString(rsmd.getColumnLabel(2));
+            return Table.parseSchema(res.getString(rsmd.getColumnLabel(2)));
         }
         throw new RuntimeException(String.format("get table %s 's schema failed", name));
     }

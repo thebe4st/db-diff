@@ -13,7 +13,8 @@ import java.util.Map;
 @Data
 public class Table {
 
-    private String schemaRaw;
+    private String originSQL;
+
 
     private Map<String,String> fields = new HashMap<>();
 
@@ -21,14 +22,14 @@ public class Table {
 
     private Map<String, Index> foreignAll = new HashMap<>();
 
-    public Table(String schemaRaw) {
-        this.schemaRaw = schemaRaw;
+    private Table(String originSQL) {
+        this.originSQL = originSQL;
     }
 
-    public static Table parseSchema(String schema) {
-        schema = schema.trim();
-        String[] lines = schema.split(StrUtil.LF);
-        Table ret = new Table(schema);
+    public static Table parseSchema(String originSQL) {
+        originSQL = originSQL.trim();
+        String[] lines = originSQL.split(StrUtil.LF);
+        Table ret = new Table(originSQL);
 
         for(int i = 1; i < lines.length - 1; i++) {
             String line = lines[i].trim();

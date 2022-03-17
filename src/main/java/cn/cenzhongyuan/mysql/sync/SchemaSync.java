@@ -1,14 +1,14 @@
 package cn.cenzhongyuan.mysql.sync;
 
+import cn.cenzhongyuan.mysql.sync.consts.MysqlSQLConst;
 import cn.cenzhongyuan.mysql.sync.consts.ProjectConstant;
+import cn.cenzhongyuan.mysql.sync.consts.SQLConst;
 import cn.cenzhongyuan.mysql.sync.enumeration.AlterType;
 import cn.cenzhongyuan.mysql.sync.model.*;
 import cn.hutool.core.util.StrUtil;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 
-import java.io.FileOutputStream;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -17,20 +17,27 @@ import java.util.Objects;
 @Data
 public class SchemaSync {
 
-    private boolean drop = false;
+    private boolean drop;
 
     private Db sourceDb;
 
     private Db destDb;
+
+    private SQLConst sqlConst;
 
     public SchemaSync(Db source,Db dest) {
         this(source,dest,false);
     }
 
     public SchemaSync(Db source,Db dest,boolean drop) {
+        this(source,dest,new MysqlSQLConst(),drop);
+    }
+
+    public SchemaSync(Db source,Db dest,SQLConst sqlConst,boolean drop) {
         this.drop = drop;
         this.sourceDb = source;
         this.destDb = dest;
+        this.sqlConst = sqlConst;
     }
 
 
@@ -55,7 +62,7 @@ public class SchemaSync {
         List<String> tableNames = this.sourceDb.getTableNames();
         List<TableAlter> ret = new ArrayList<>();
         for (String tableName : tableNames) {
-            TableAlter tableAlter = this.getAlterDataByTable(tableName);
+            TableAlter tableAlter = this.diffByTableName(tableName);
             if(StrUtil.isNotBlank(tableAlter.getSql())) {
                 ret.add(tableAlter);
             }
@@ -77,30 +84,30 @@ public class SchemaSync {
         return ret;
     }
 
-    public TableAlter getAlterDataByTable(String table) {
+    public TableAlter diffByTableName(String table) {
         TableAlter alter = new TableAlter();
         alter.setTable(table);
         alter.setAlterType(AlterType.NO);
 
-        String sourceTableSchema = this.getSourceDb().getTableSchema(table);
-        String destTableSchema = this.getDestDb().getTableSchema(table);
+        Table sourceT = sourceDb.getTable(table);
+        Table destT = destDb.getTable(table);
 
-        SchemaDiff schemaDiff = new SchemaDiff(table, sourceTableSchema, destTableSchema);
+        SchemaDiff schemaDiff = new SchemaDiff(table, sourceT, destT);
         alter.setSchemaDiff(schemaDiff);
 
-        if(sourceTableSchema.equals(destTableSchema)) {
+        if(Objects.equals(sourceT.getOriginSQL(),destT.getOriginSQL())) {
             return alter;
         }
 
-        if(StrUtil.isBlank(sourceTableSchema)) {
+        if(StrUtil.isBlank(sourceT.getOriginSQL())) {
             alter.setAlterType(AlterType.DROP);
             alter.setSql(String.format("drop table `%s`;",table));
             return alter;
         }
 
-        if(StrUtil.isBlank(destTableSchema)) {
+        if(StrUtil.isBlank(destT.getOriginSQL())) {
             alter.setAlterType(AlterType.CREATE);
-            alter.setSql(sourceTableSchema + ";");
+            alter.setSql(sourceT + ";");
             return alter;
         }
 
@@ -114,19 +121,18 @@ public class SchemaSync {
     }
 
     public String getSchemaDiff(TableAlter alter) {
-        Table sourceMyS = alter.getSchemaDiff().getSource();
-        Table destMyS = alter.getSchemaDiff().getDest();
-        String table = alter.getTable();
+        Table sourceT = alter.getSchemaDiff().getSource();
+        Table destT = alter.getSchemaDiff().getDest();
+        String tableName = alter.getTable();
 
         List<String> alterLines = new ArrayList<>();
 
         //比对字段
-        sourceMyS.getFields().forEach((name,dt) -> {
+        sourceT.getFields().forEach((name,dt) -> {
             //TODO: 忽略字段
-
             String alterSQL = "";
-            if(destMyS.getFields().containsKey(name)) {
-                String destDt = destMyS.getFields().get(name);
+            if(destT.getFields().containsKey(name)) {
+                String destDt = destT.getFields().get(name);
                 if(!dt.equals(destDt)) {
                     alterSQL = String.format("CHANGE `%s` %s",name,dt);
                 }
@@ -135,31 +141,31 @@ public class SchemaSync {
             }
 
             if(StrUtil.isNotBlank(alterSQL)) {
-                log.info("trace check column.alter {}.{} alterSQL= [{}]", table, name, alterSQL);
+                log.info("trace check column.alter {}.{} alterSQL= [{}]", tableName, name, alterSQL);
                 alterLines.add(alterSQL);
             } else {
-                log.info("trace check column.alter {}.{} no change", table, name);
+                log.info("trace check column.alter {}.{} no change", tableName, name);
             }
         });
 
         // source 库已经删除的字段
         if(drop) {
-            destMyS.getFields().forEach((name,dest) -> {
-                if(!sourceMyS.getFields().containsKey(name)) {
+            destT.getFields().forEach((name,dest) -> {
+                if(!sourceT.getFields().containsKey(name)) {
                     String alterSQL = String.format("drop `%s`", name);
                     alterLines.add(alterSQL);
-                    log.info("trace check column.alter {}.{} alterSQL= {}", table, name, alterSQL);
+                    log.info("trace check column.alter {}.{} alterSQL= {}", tableName, name, alterSQL);
                 } else {
-                    log.info("trace check column.alter {}.{} no change", table, name);
+                    log.info("trace check column.alter {}.{} no change", tableName, name);
                 }
             });
         }
 
         // 比对索引
-        sourceMyS.getIndexAll().forEach((index,idx) -> {
-            boolean has = destMyS.getIndexAll().containsKey(index);
-            Index dIdx = destMyS.getIndexAll().get(index);
-            log.info("trace indexName---->[ {}.{} ] dest_has:{}\ndest_idx:{}\nsource_idx:{}", table, index, has, dIdx, idx);
+        sourceT.getIndexAll().forEach((index,idx) -> {
+            boolean has = destT.getIndexAll().containsKey(index);
+            Index dIdx = destT.getIndexAll().get(index);
+            log.info("trace indexName---->[ {}.{} ] dest_has:{}\ndest_idx:{}\nsource_idx:{}", tableName, index, has, dIdx, idx);
             String alterSQL = "";
             if(has) {
                 if(!idx.getSql().equals(dIdx.getSql())) {
@@ -170,9 +176,9 @@ public class SchemaSync {
             }
             if(StrUtil.isNotBlank(alterSQL)) {
                 alterLines.add(alterSQL);
-                log.info("trace check index.alter {}.{} alterSQL= {}", table, index, alterSQL);
+                log.info("trace check index.alter {}.{} alterSQL= {}", tableName, index, alterSQL);
             } else {
-                log.info("trace check index.alter {}.{} no change", table, index);
+                log.info("trace check index.alter {}.{} no change", tableName, index);
             }
         });
 

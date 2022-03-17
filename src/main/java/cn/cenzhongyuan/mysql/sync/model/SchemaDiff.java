@@ -12,10 +12,10 @@ public class SchemaDiff {
     private Table source;
     private Table dest;
 
-    public SchemaDiff(String table,String source,String dest) {
+    public SchemaDiff(String table,Table source,Table dest) {
         this.table = table;
-        this.source = Table.parseSchema(source);
-        this.dest = Table.parseSchema(dest);
+        this.source = source;
+        this.dest = dest;
     }
 
     public List<String> getRelationTables() {
