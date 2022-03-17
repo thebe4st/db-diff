@@ -1,7 +1,8 @@
-package cn.cenzhongyuan.mysql.sync.model;
+package cn.cenzhongyuan.mysql.sync;
 
 import cn.cenzhongyuan.mysql.sync.consts.ProjectConstant;
 import cn.cenzhongyuan.mysql.sync.enumeration.AlterType;
+import cn.cenzhongyuan.mysql.sync.model.*;
 import cn.hutool.core.util.StrUtil;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
@@ -10,6 +11,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 @Slf4j
 @Data
@@ -31,57 +33,37 @@ public class SchemaSync {
         this.destDb = dest;
     }
 
-    public void tableAlter2SQLFile(List<TableAlter> data,String path) {
-        if(data == null || StrUtil.isBlank(path)) {
-            throw new RuntimeException("param is valid");
-        }
-        if(data.isEmpty()) {
-            return;
-        }
 
+    public String differenceSQL() {
+        List<TableAlter> difference = this.difference();
+        if(difference.isEmpty()) {
+            log.info("All consistent, You don't need to generate");
+            return StrUtil.EMPTY;
+        }
         StringBuilder sb = new StringBuilder();
-        for (TableAlter datum : data) {
-            String sql = datum.getSql();
+        for (TableAlter diff : difference) {
+            String sql = diff.getSql();
             if(StrUtil.isNotBlank(sql)) {
                 sb.append(sql);
                 sb.append(StrUtil.LF);
             }
         }
-        String sqls = sb.toString();
-        if(StrUtil.isBlank(sqls)) {
-            return;
-        }
-        FileOutputStream fos = null;
-        try {
-            fos = new FileOutputStream(path);
-            fos.write(sqls.getBytes());
-        } catch (IOException e) {
-            e.printStackTrace();
-        } finally {
-            if(fos != null) {
-                try {
-                    fos.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-        }
+        return sb.toString();
     }
 
-    public List<TableAlter> getAllDiff() {
+    public List<TableAlter> difference() {
         List<String> tableNames = this.sourceDb.getTableNames();
         List<TableAlter> ret = new ArrayList<>();
-
         for (String tableName : tableNames) {
-            TableAlter test = this.getAlterDataByTable(tableName);
-            if(StrUtil.isNotBlank(test.getSql())) {
-                ret.add(test);
+            TableAlter tableAlter = this.getAlterDataByTable(tableName);
+            if(StrUtil.isNotBlank(tableAlter.getSql())) {
+                ret.add(tableAlter);
             }
         }
         return ret;
     }
 
-    public List<String> getNewTableNames() {
+    public List<String> getIncrTableNames() {
         List<String> sourceTables = this.sourceDb.getTableNames();
         List<String> destTables = this.destDb.getTableNames();
 

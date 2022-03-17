@@ -1,6 +1,7 @@
 package cn.cenzhongyuan.mysql.sync.model;
 
 import cn.cenzhongyuan.mysql.sync.util.ProjectUtils;
+import cn.hutool.core.util.CharUtil;
 import cn.hutool.core.util.StrUtil;
 import lombok.Data;
 
@@ -26,7 +27,7 @@ public class Table {
 
     public static Table parseSchema(String schema) {
         schema = schema.trim();
-        String[] lines = schema.split("\n");
+        String[] lines = schema.split(StrUtil.LF);
         Table ret = new Table(schema);
 
         for(int i = 1; i < lines.length - 1; i++) {
@@ -34,8 +35,7 @@ public class Table {
             if(StrUtil.isBlank(line)) {
                 continue;
             }
-
-            line = ProjectUtils.trimRight(line,',');
+            line = ProjectUtils.trimRight(line,CharUtil.COMMA);
             if(line.charAt(0) == '`') {
                 int index = line.substring(1).indexOf('`');
                 String name = line.substring(1,index + 1);

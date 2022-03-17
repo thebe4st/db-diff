@@ -3,9 +3,9 @@ package cn.cenzhongyuan.mysql.sync.model;
 import cn.cenzhongyuan.mysql.sync.consts.ProjectConstant;
 import cn.cenzhongyuan.mysql.sync.consts.MysqlSQLConst;
 import cn.cenzhongyuan.mysql.sync.consts.SQLConst;
-import cn.hutool.core.util.StrUtil;
 import lombok.Builder;
 import lombok.Cleanup;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 
 import java.sql.*;
@@ -31,53 +31,40 @@ public class Db {
         }
     }
 
+    @SneakyThrows
     public Connection getConnection() {
-        Connection ret = null;
-        try {
-            ret = DriverManager.getConnection(this.url, this.user, this.pwd);
-        } catch (SQLException e) {
-            log.error("", e);
-        }
-        return ret;
+        return DriverManager.getConnection(this.url, this.user, this.pwd);
     }
 
+    @SneakyThrows
     public List<String> getTableNames() {
         List<String> ret = new ArrayList<>();
-        try {
-            @Cleanup Connection connection = null;
-            @Cleanup Statement statement = null;
-            @Cleanup ResultSet res = null;
-            connection = getConnection();
-            statement = connection.createStatement();
-            res = statement.executeQuery(sql().tableName());
-            while (res.next()) {
-                ResultSetMetaData rsmd = res.getMetaData();
-                ret.add(res.getString(rsmd.getColumnLabel(1)));
-            }
-        } catch (SQLException e) {
-            log.error("", e);
+        @Cleanup Connection connection = null;
+        @Cleanup Statement statement = null;
+        @Cleanup ResultSet res = null;
+        connection = getConnection();
+        statement = connection.createStatement();
+        res = statement.executeQuery(sql().tableName());
+        while (res.next()) {
+            ResultSetMetaData rsmd = res.getMetaData();
+            ret.add(res.getString(rsmd.getColumnLabel(1)));
         }
         return ret;
     }
 
+    @SneakyThrows
     public String getTableSchema(String name) {
-        try {
-            @Cleanup Connection connection = null;
-            @Cleanup Statement statement = null;
-            @Cleanup ResultSet res = null;
-            connection = getConnection();
-            statement = connection.createStatement();
-            res = statement.executeQuery(sql().tableSchema(name));
-            if (res.next()) {
-                ResultSetMetaData rsmd = res.getMetaData();
-                return res.getString(rsmd.getColumnLabel(2));
-            } else {
-                throw new RuntimeException(String.format("get table %s 's schema failed", name));
-            }
-        } catch (SQLException ignored) {
-            log.error("get table {} 's schema failed", name);
+        @Cleanup Connection connection = null;
+        @Cleanup Statement statement = null;
+        @Cleanup ResultSet res = null;
+        connection = getConnection();
+        statement = connection.createStatement();
+        res = statement.executeQuery(sql().tableSchema(name));
+        if (res.next()) {
+            ResultSetMetaData rsmd = res.getMetaData();
+            return res.getString(rsmd.getColumnLabel(2));
         }
-        return StrUtil.EMPTY;
+        throw new RuntimeException(String.format("get table %s 's schema failed", name));
     }
 
     private SQLConst sql() {
