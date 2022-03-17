@@ -61,7 +61,7 @@ public class SchemaSync {
         return ret;
     }
 
-    public List<String> getIncrTableNames() {
+    private List<String> getIncrTableNames() {
         List<String> sourceTables = ConfigHelper.get().getSource().getTableNames();
         List<String> destTables = ConfigHelper.get().getDest().getTableNames();
 
