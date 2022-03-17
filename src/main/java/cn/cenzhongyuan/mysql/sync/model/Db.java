@@ -1,5 +1,6 @@
 package cn.cenzhongyuan.mysql.sync.model;
 
+import cn.cenzhongyuan.mysql.sync.config.DiffContext;
 import cn.cenzhongyuan.mysql.sync.consts.ProjectConstant;
 import cn.cenzhongyuan.mysql.sync.consts.MysqlSQLConst;
 import cn.cenzhongyuan.mysql.sync.consts.SQLConst;
@@ -53,16 +54,21 @@ public class Db {
     }
 
     @SneakyThrows
-    public Table getTable(String name) {
+    public Table getTable(String name, DiffContext diffContext) {
         @Cleanup Connection connection = null;
         @Cleanup Statement statement = null;
         @Cleanup ResultSet res = null;
         connection = getConnection();
-        statement = connection.createStatement();
-        res = statement.executeQuery(sql().tableSchema(name));
+        try {
+            statement = connection.createStatement();
+            res = statement.executeQuery(sql().tableSchema(name));
+        } catch (Exception e) {
+            return new Table("",diffContext);
+        }
+
         if (res.next()) {
             ResultSetMetaData rsmd = res.getMetaData();
-            return Table.parseSchema(res.getString(rsmd.getColumnLabel(2)));
+            return Table.parseSchema(res.getString(rsmd.getColumnLabel(2)),diffContext);
         }
         throw new RuntimeException(String.format("get table %s 's schema failed", name));
     }

@@ -16,7 +16,7 @@ public class RegTest
                 "CONSTRAINT `busi_table_ibfk_1` FOREIGN KEY (`repo_id`) REFERENCES `repo_table` (`repo_id`)"
         };
         for (String sql : sqls) {
-            Index dbIndex = Index.parseDbIndexLine(sql);
+            Index dbIndex = Index.parseDbIndexLine(sql,null);
             if(dbIndex == null) {
                 throw new RuntimeException();
             }

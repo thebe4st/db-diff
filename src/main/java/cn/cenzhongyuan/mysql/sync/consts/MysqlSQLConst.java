@@ -36,4 +36,24 @@ public class MysqlSQLConst implements SQLConst {
     public String alertTableDelFieldSubSQL(String subSQL) {
         return String.format("drop `%s`", subSQL);
     }
+
+    @Override
+    public String alertTableAddIndexSubSQL(String subSQL) {
+        return String.format("ADD %s", subSQL);
+    }
+
+    @Override
+    public String alertTableDelPrimaryIndexSubSQL(String subSQL) {
+        return "DROP PRIMARY KEY";
+    }
+
+    @Override
+    public String alertTableDelForeignIndexSubSQL(String subSQL) {
+        return String.format("DROP FOREIGN KEY `%s`", subSQL);
+    }
+
+    @Override
+    public String alertTableDelIndexSubSQL(String subSQL) {
+        return String.format("DROP INDEX `%s`", subSQL);
+    }
 }

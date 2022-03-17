@@ -1,5 +1,6 @@
 package cn.cenzhongyuan.mysql.sync.model;
 
+import cn.cenzhongyuan.mysql.sync.config.DiffContext;
 import cn.cenzhongyuan.mysql.sync.util.ProjectUtils;
 import cn.hutool.core.util.CharUtil;
 import cn.hutool.core.util.StrUtil;
@@ -15,6 +16,7 @@ public class Table {
 
     private String originSQL;
 
+    private DiffContext diffContext;
 
     private Map<String,String> fields = new HashMap<>();
 
@@ -22,14 +24,15 @@ public class Table {
 
     private Map<String, Index> foreignAll = new HashMap<>();
 
-    private Table(String originSQL) {
+    Table(String originSQL, DiffContext diffContext) {
         this.originSQL = originSQL;
+        this.diffContext = diffContext;
     }
 
-    public static Table parseSchema(String originSQL) {
+    public static Table parseSchema(String originSQL,DiffContext diffContext) {
         originSQL = originSQL.trim();
         String[] lines = originSQL.split(StrUtil.LF);
-        Table ret = new Table(originSQL);
+        Table ret = new Table(originSQL,diffContext);
 
         for(int i = 1; i < lines.length - 1; i++) {
             String line = lines[i].trim();
@@ -42,7 +45,7 @@ public class Table {
                 String name = line.substring(1,index + 1);
                 ret.getFields().put(name,line);
             } else {
-                Index dbIndex = Index.parseDbIndexLine(line);
+                Index dbIndex = Index.parseDbIndexLine(line,diffContext);
                 if(dbIndex == null) {
                     continue;
                 }

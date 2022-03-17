@@ -14,4 +14,12 @@ public interface SQLConst {
     String alertTableAddFieldSubSQL(String subSQL);
 
     String alertTableDelFieldSubSQL(String subSQL);
+
+    String alertTableAddIndexSubSQL(String subSQL);
+
+    String alertTableDelPrimaryIndexSubSQL(String subSQL);
+
+    String alertTableDelForeignIndexSubSQL(String subSQL);
+
+    String alertTableDelIndexSubSQL(String subSQL);
 }

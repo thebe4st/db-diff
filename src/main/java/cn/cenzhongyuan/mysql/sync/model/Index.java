@@ -1,10 +1,12 @@
 package cn.cenzhongyuan.mysql.sync.model;
 
+import cn.cenzhongyuan.mysql.sync.config.DiffContext;
+import cn.cenzhongyuan.mysql.sync.consts.CharConst;
 import cn.cenzhongyuan.mysql.sync.consts.ProjectConstant;
 import cn.cenzhongyuan.mysql.sync.enums.IndexType;
 import cn.hutool.core.util.StrUtil;
-import com.alibaba.fastjson.JSON;
 import lombok.Data;
+import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.ArrayList;
@@ -14,6 +16,7 @@ import java.util.regex.Pattern;
 
 @Slf4j
 @Data
+@ToString
 public class Index {
 
     private IndexType indexType;
@@ -22,25 +25,28 @@ public class Index {
 
     private String sql;
 
+    private DiffContext diffContext;
+
     // 相关联的表
     private List<String> relationTables = new ArrayList<>();
 
-    public Index(String sql) {
+    public Index(String sql, DiffContext context) {
+        this.diffContext = context;
         this.sql = sql;
     }
 
-    public static Index parseDbIndexLine(String line) {
+    public static Index parseDbIndexLine(String line,DiffContext context) {
         line = line.trim();
-        Index idx = new Index(line);
+        Index idx = new Index(line,context);
 
-        if (line.startsWith("PRIMARY")) {
+        if (line.startsWith(IndexType.PRIMARY.getPrefix())) {
             idx.setIndexType(IndexType.PRIMARY);
-            idx.setName("PRIMARY KEY");
+            idx.setName(IndexType.PRIMARY.getName());
             return idx;
         }
 
         if (Pattern.matches(ProjectConstant.INDEX_REG, line)) {
-            List<String> arr = StrUtil.split(line, "`");
+            List<String> arr = StrUtil.split(line, CharConst.BACKQUOTE);
             idx.setIndexType(IndexType.INDEX);
             idx.setName(arr.get(1));
             return idx;
@@ -70,11 +76,11 @@ public class Index {
 
         switch (this.indexType) {
             case PRIMARY:
-                alterSQL.add(String.format("ADD %s", sql));
+                alterSQL.add(diffContext.getSqlConst().alertTableAddIndexSubSQL(sql));
                 break;
             case FOREIGN:
             case INDEX:
-                alterSQL.add(String.format("ADD %s", sql));
+                alterSQL.add(diffContext.getSqlConst().alertTableAddIndexSubSQL(sql));
                 break;
             default:
                log.error("unknown indexType {}", this.indexType);
@@ -82,14 +88,14 @@ public class Index {
         return String.join(ProjectConstant.LINE_JOIN_DELIMITER, alterSQL);
     }
 
-    private String alterDropSQL() {
+    public String alterDropSQL() {
         switch (this.indexType) {
             case PRIMARY:
-                return "DROP PRIMARY KEY";
+                return diffContext.getSqlConst().alertTableDelPrimaryIndexSubSQL(StrUtil.EMPTY);
             case INDEX:
-                return String.format("DROP INDEX `%s`", this.name);
+                return diffContext.getSqlConst().alertTableDelIndexSubSQL(this.name);
             case FOREIGN:
-                return String.format("DROP FOREIGN KEY `%s`", this.name);
+                return diffContext.getSqlConst().alertTableDelForeignIndexSubSQL(this.name);
             default:
                 log.error("unknown indexType {}", this.indexType);
         }
@@ -102,9 +108,4 @@ public class Index {
             this.relationTables.add(table);
         }
     }
-
-    public String toString() {
-        return JSON.toJSONString(this);
-    }
-
 }

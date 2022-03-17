@@ -5,7 +5,7 @@ import cn.cenzhongyuan.mysql.sync.model.Db;
 import lombok.Data;
 
 @Data
-public class DbDiffConfigurer {
+public class DiffContext {
     private boolean drop = true;
     private Db source;
     private Db dest;

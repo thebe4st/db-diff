@@ -1,9 +1,9 @@
 package cn.cenzhongyuan.mysql.sync.model;
 
+import cn.cenzhongyuan.mysql.sync.config.DiffContext;
 import cn.cenzhongyuan.mysql.sync.consts.CharConst;
 import cn.cenzhongyuan.mysql.sync.consts.ProjectConstant;
 import cn.cenzhongyuan.mysql.sync.enums.AlterType;
-import cn.cenzhongyuan.mysql.sync.util.ConfigHelper;
 import cn.hutool.core.util.StrUtil;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
@@ -21,15 +21,18 @@ public class TableAlter {
 
     private String sql;
 
+    private DiffContext diffContext;
+
     private final SchemaDiff schema;
 
-    public TableAlter(String table) {
+    public TableAlter(String table, DiffContext diffContext) {
         this.table = table;
+        this.diffContext = diffContext;
         this.alterType = AlterType.NO;
 
         this.schema = new SchemaDiff(table,
-                ConfigHelper.get().getSource().getTable(table),
-                ConfigHelper.get().getDest().getTable(table)
+                this.diffContext.getSource().getTable(table,diffContext),
+                this.diffContext.getDest().getTable(table,diffContext)
         );
 
         String SSQL = this.schema.getSource().getOriginSQL();
@@ -37,7 +40,7 @@ public class TableAlter {
 
         if (StrUtil.isBlank(SSQL)) {
             this.alterType = AlterType.DROP;
-            this.sql = ConfigHelper.get().getSqlConst().dropTable(table);
+            this.sql = this.diffContext.getSqlConst().dropTable(table);
             return;
         }
 
@@ -50,7 +53,7 @@ public class TableAlter {
         String diff = this.getSchemaDiff();
         if (StrUtil.isNotBlank(diff)) {
             this.alterType = AlterType.ALTER;
-            this.sql = ConfigHelper.get().getSqlConst().alertTable(table, diff);
+            this.sql = this.diffContext.getSqlConst().alertTable(table, diff);
         }
     }
 
@@ -67,28 +70,24 @@ public class TableAlter {
             if(destTable.getFields().containsKey(sourceFieldName)) {
                 String destFieldSQL = destTable.getFields().get(sourceFieldName);
                 if(!sourceFieldSQL.equals(destFieldSQL)) {
-                    alterSQL = ConfigHelper.get().getSqlConst().alertTableChangeFieldSubSQL(sourceFieldName,sourceFieldSQL);
+                    alterSQL = this.diffContext.getSqlConst().alertTableChangeFieldSubSQL(sourceFieldName,sourceFieldSQL);
                 }
             } else {
-                alterSQL =  ConfigHelper.get().getSqlConst().alertTableAddFieldSubSQL(sourceFieldSQL);
+                alterSQL =  this.diffContext.getSqlConst().alertTableAddFieldSubSQL(sourceFieldSQL);
             }
             if(StrUtil.isNotBlank(alterSQL)) {
                 log.info("trace check column.alter {}.{} alterSQL= [{}]", tableName, sourceFieldName, alterSQL);
                 alterLines.add(alterSQL);
-            } else {
-                log.info("trace check column.alter {}.{} no change", tableName, sourceFieldName);
             }
         });
 
         // source 库已经删除的字段
-        if(ConfigHelper.get().isDrop()) {
-            destTable.getFields().forEach((name,dest) -> {
-                if(!sourceTable.getFields().containsKey(name)) {
-                    String alterSQL = ConfigHelper.get().getSqlConst().alertTableDelFieldSubSQL(name);
+        if(this.diffContext.isDrop()) {
+            destTable.getFields().forEach((sourceFieldName,sourceFieldSQL) -> {
+                if(!sourceTable.getFields().containsKey(sourceFieldName)) {
+                    String alterSQL = this.diffContext.getSqlConst().alertTableDelFieldSubSQL(sourceFieldName);
                     alterLines.add(alterSQL);
-                    log.info("trace check column.alter {}.{} alterSQL= {}", tableName, name, alterSQL);
-                } else {
-                    log.info("trace check column.alter {}.{} no change", tableName, name);
+                    log.info("trace check column.alter {}.{} alterSQL= {}", tableName, sourceFieldName, alterSQL);
                 }
             });
         }
@@ -109,15 +108,22 @@ public class TableAlter {
             if(StrUtil.isNotBlank(alterSQL)) {
                 alterLines.add(alterSQL);
                 log.info("trace check index.alter {}.{} alterSQL= {}", tableName, index, alterSQL);
-            } else {
-                log.info("trace check index.alter {}.{} no change", tableName, index);
             }
         });
 
         // drop index
+        if(this.diffContext.isDrop()) {
+            destTable.getIndexAll().forEach((destIndexName,destIndex) -> {
+                if(!sourceTable.getIndexAll().containsKey(destIndexName)) {
+                    String alterSQL = destIndex.alterDropSQL();
+                    alterLines.add(alterSQL);
+                    log.info("trace check column.alter {}.{} alterSQL= {}", tableName, destIndexName, alterSQL);
+                }
+            });
+        }
 
 
-        // 比对外键
+            // 比对外键
 
         // drop 外键
 
