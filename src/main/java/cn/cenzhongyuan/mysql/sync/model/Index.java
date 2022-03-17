@@ -1,10 +1,10 @@
 package cn.cenzhongyuan.mysql.sync.model;
 
-import cn.cenzhongyuan.mysql.sync.core.ProjectConstant;
+import cn.cenzhongyuan.mysql.sync.consts.ProjectConstant;
 import cn.cenzhongyuan.mysql.sync.enumeration.IndexType;
+import cn.hutool.core.util.StrUtil;
 import com.alibaba.fastjson.JSON;
 import lombok.Data;
-import org.apache.commons.lang3.StringUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -38,7 +38,7 @@ public class Index {
         }
 
         if(Pattern.matches(ProjectConstant.INDEX_REG,line)) {
-            String[] arr = StringUtils.split(line, "`");
+            String[] arr = StrUtil.split(line, "`");
             idx.setIndexType(IndexType.INDEX);
             idx.setName(arr[1]);
             return idx;
@@ -61,7 +61,7 @@ public class Index {
         List<String> alterSQL = new ArrayList<>();
         if(drop) {
             String dropSQL = this.alterDropSQL();
-            if(StringUtils.isNotBlank(dropSQL)) {
+            if(StrUtil.isNotBlank(dropSQL)) {
                 alterSQL.add(dropSQL);
             }
         }
@@ -77,7 +77,7 @@ public class Index {
             default:
                 System.out.println(String.format("unknow indexType %s", this.indexType));
         }
-        return StringUtils.join(alterSQL.toArray(new String[0]),",\n");
+        return String.join(ProjectConstant.LINE_JOIN_DELIMITER, alterSQL);
     }
 
     private String alterDropSQL() {
@@ -96,7 +96,7 @@ public class Index {
 
     public void addRelationTable(String table) {
         table = table.trim();
-        if(StringUtils.isNotBlank(table)) {
+        if(StrUtil.isNotBlank(table)) {
             this.relationTables.add(table);
         }
     }

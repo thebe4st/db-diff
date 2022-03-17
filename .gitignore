@@ -2,6 +2,7 @@ target
 logs
 .mvn
 mvnw
+PrivateTest.java
 
 .DS_Store
 

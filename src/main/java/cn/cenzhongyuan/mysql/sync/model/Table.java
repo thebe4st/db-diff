@@ -1,8 +1,8 @@
 package cn.cenzhongyuan.mysql.sync.model;
 
 import cn.cenzhongyuan.mysql.sync.util.ProjectUtils;
+import cn.hutool.core.util.StrUtil;
 import lombok.Data;
-import org.apache.commons.lang3.StringUtils;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -31,7 +31,7 @@ public class Table {
 
         for(int i = 1; i < lines.length - 1; i++) {
             String line = lines[i].trim();
-            if(StringUtils.isBlank(line)) {
+            if(StrUtil.isBlank(line)) {
                 continue;
             }
 

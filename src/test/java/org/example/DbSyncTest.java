@@ -1,36 +1,33 @@
 package org.example;
 
-import static org.junit.Assert.assertTrue;
-
-import cn.cenzhongyuan.mysql.sync.SchemaSyncConfig;
+import cn.cenzhongyuan.mysql.sync.model.Db;
 import cn.cenzhongyuan.mysql.sync.model.Index;
 import cn.cenzhongyuan.mysql.sync.model.SchemaSync;
+import cn.cenzhongyuan.mysql.sync.model.TableAlter;
 import org.junit.Test;
+
+import java.util.List;
 
 /**
  * Unit test for simple App.
  */
-public class AppTest 
+public class DbSyncTest
 {
-    private static SchemaSyncConfig config = null;
+    static Db source;
+    static Db dest;
     static
     {
-        String sourceDbUrl = "jdbc:mysql://192.168.1.201/nlp_customer";
-        String sourceDbUser = "admin";
-        String sourceDbPwd = "123456";
+        source = Db.builder()
+                .url("jdbc:mysql://localhost/b?serverTimezone=GMT%2B8&tinyInt1isBit=false&useUnicode=true&characterEncoding=UTF-8&useSSL=false")
+                .user("root")
+                .pwd("pwd")
+                .build();
 
-        String destDbUrl = "jdbc:mysql://192.168.1.201/guest_replication";
-        String destDbUser = "admin";
-        String destDbPwd = "123456";
-        config = new SchemaSyncConfig();
-        config.setDestDbPwd(destDbPwd);
-        config.setDestDbUrl(destDbUrl);
-        config.setDestDbUser(destDbUser);
-
-        config.setSourceDbPwd(sourceDbPwd);
-        config.setSourceDbUser(sourceDbUser);
-        config.setSourceDbUrl(sourceDbUrl);
-
+        dest = Db.builder()
+                .url("jdbc:mysql://localhost/a?serverTimezone=GMT%2B8&tinyInt1isBit=false&useUnicode=true&characterEncoding=UTF-8&useSSL=false")
+                .user("root")
+                .pwd("pwd")
+                .build();
     }
     /**
      * Rigorous Test :-)
@@ -56,9 +53,8 @@ public class AppTest
 
     @Test
     public void getVersionTest() {
-
-        SchemaSync schemaSync = new SchemaSync(config);
-        System.out.println(schemaSync.getSourceDb().getLastVersion());
-
+        SchemaSync schemaSync = new SchemaSync(source,dest);
+        List<TableAlter> allDiff = schemaSync.getAllDiff();
+        schemaSync.tableAlter2SQLFile(allDiff,"/Users/cenzhongyuan/Desktop/hengonda/diff2.sql");
     }
 }

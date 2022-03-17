@@ -1,11 +1,11 @@
 package cn.cenzhongyuan.mysql.sync.util;
 
 
-import org.apache.commons.lang3.StringUtils;
+import cn.hutool.core.util.StrUtil;
 
 public class ProjectUtils {
     public static String trimRight(String src,char ch) {
-        if(StringUtils.isBlank(src)) {
+        if(StrUtil.isBlank(src)) {
             return "";
         }
         char[] chars = src.toCharArray();

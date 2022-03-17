@@ -1,10 +1,9 @@
 package cn.cenzhongyuan.mysql.sync.model;
 
-import cn.cenzhongyuan.mysql.sync.SchemaSyncConfig;
+import cn.cenzhongyuan.mysql.sync.consts.ProjectConstant;
 import cn.cenzhongyuan.mysql.sync.enumeration.AlterType;
-import cn.cenzhongyuan.mysql.sync.enumeration.DbType;
+import cn.hutool.core.util.StrUtil;
 import lombok.Data;
-import org.apache.commons.lang3.StringUtils;
 
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -14,20 +13,24 @@ import java.util.List;
 @Data
 public class SchemaSync {
 
-    private SchemaSyncConfig config;
+    private boolean drop = false;
 
     private Db sourceDb;
 
     private Db destDb;
 
-    public SchemaSync(SchemaSyncConfig config) {
-        this.config = config;
-        this.sourceDb = new Db(config.getSourceDbUser(),config.getSourceDbPwd(),config.getSourceDbUrl(), DbType.SOURCE);
-        this.destDb = new Db(config.getDestDbUser(),config.getDestDbPwd(),config.getDestDbUrl(), DbType.DEST);
+    public SchemaSync(Db source,Db dest) {
+        this(source,dest,false);
+    }
+
+    public SchemaSync(Db source,Db dest,boolean drop) {
+        this.drop = drop;
+        this.sourceDb = source;
+        this.destDb = dest;
     }
 
     public void tableAlter2SQLFile(List<TableAlter> data,String path) {
-        if(data == null || StringUtils.isBlank(path)) {
+        if(data == null || StrUtil.isBlank(path)) {
             throw new RuntimeException("param is valid");
         }
         if(data.isEmpty()) {
@@ -37,13 +40,13 @@ public class SchemaSync {
         StringBuilder sb = new StringBuilder();
         for (TableAlter datum : data) {
             String sql = datum.getSql();
-            if(StringUtils.isNotBlank(sql)) {
+            if(StrUtil.isNotBlank(sql)) {
                 sb.append(sql);
-                sb.append("\n");
+                sb.append(StrUtil.LF);
             }
         }
         String sqls = sb.toString();
-        if(StringUtils.isBlank(sqls)) {
+        if(StrUtil.isBlank(sqls)) {
             return;
         }
         FileOutputStream fos = null;
@@ -69,7 +72,7 @@ public class SchemaSync {
 
         for (String tableName : tableNames) {
             TableAlter test = this.getAlterDataByTable(tableName);
-            if(StringUtils.isNotBlank(test.getSql())) {
+            if(StrUtil.isNotBlank(test.getSql())) {
                 ret.add(test);
             }
         }
@@ -105,20 +108,20 @@ public class SchemaSync {
             return alter;
         }
 
-        if(StringUtils.isBlank(sourceTableSchema)) {
+        if(StrUtil.isBlank(sourceTableSchema)) {
             alter.setAlterType(AlterType.DROP);
             alter.setSql(String.format("drop table `%s`;",table));
             return alter;
         }
 
-        if(StringUtils.isBlank(destTableSchema)) {
+        if(StrUtil.isBlank(destTableSchema)) {
             alter.setAlterType(AlterType.CREATE);
             alter.setSql(sourceTableSchema + ";");
             return alter;
         }
 
         String diff = this.getSchemaDiff(alter);
-        if(StringUtils.isNotBlank(diff)) {
+        if(StrUtil.isNotBlank(diff)) {
             alter.setAlterType(AlterType.ALTER);
             alter.setSql(String.format("ALTER TABLE `%s`\n%s;", table, diff));
         }
@@ -147,23 +150,23 @@ public class SchemaSync {
                 alterSQL =  "ADD " + dt;
             }
 
-            if(StringUtils.isNotBlank(alterSQL)) {
-                System.out.println(String.format("trace check column.alter %s.%s alterSQL= %s", table, name, alterSQL));
+            if(StrUtil.isNotBlank(alterSQL)) {
+                System.out.printf("trace check column.alter %s.%s alterSQL= %s%n", table, name, alterSQL);
                 alterLines.add(alterSQL);
             } else {
-                System.out.println(String.format("trace check column.alter %s.%s no change", table, name));
+                System.out.printf("trace check column.alter %s.%s no change%n", table, name);
             }
         });
 
         // source 库已经删除的字段
-        if(this.config.isDrop()) {
+        if(drop) {
             destMyS.getFields().forEach((name,dest) -> {
                 if(!sourceMyS.getFields().containsKey(name)) {
                     String alterSQL = String.format("drop `%s`", name);
                     alterLines.add(alterSQL);
-                    System.out.println(String.format("trace check column.alter %s.%s alterSQL= %s", table, name, alterSQL));
+                    System.out.printf("trace check column.alter %s.%s alterSQL= %s%n", table, name, alterSQL);
                 } else {
-                    System.out.println(String.format("trace check column.alter %s.%s no change", table, name));
+                    System.out.printf("trace check column.alter %s.%s no change%n", table, name);
                 }
             });
         }
@@ -172,7 +175,7 @@ public class SchemaSync {
         sourceMyS.getIndexAll().forEach((index,idx) -> {
             boolean has = destMyS.getIndexAll().containsKey(index);
             Index dIdx = destMyS.getIndexAll().get(index);
-            System.out.println(String.format("trace indexName---->[ %s.%s ] dest_has:%s\ndest_idx:%s\nsource_idx:%s", table, index, has, dIdx, idx));
+            System.out.printf("trace indexName---->[ %s.%s ] dest_has:%s\ndest_idx:%s\nsource_idx:%s%n", table, index, has, dIdx, idx);
             String alterSQL = "";
             if(has) {
                 if(!idx.getSql().equals(dIdx.getSql())) {
@@ -181,11 +184,11 @@ public class SchemaSync {
             }else {
                 alterSQL = idx.alterAddSql(false);
             }
-            if(StringUtils.isNotBlank(alterSQL)) {
+            if(StrUtil.isNotBlank(alterSQL)) {
                 alterLines.add(alterSQL);
-                System.out.println(String.format("trace check index.alter %s.%s alterSQL= %s", table, index, alterSQL));
+                System.out.printf("trace check index.alter %s.%s alterSQL= %s%n", table, index, alterSQL);
             } else {
-                System.out.println(String.format("trace check index.alter %s.%s no change", table, index, alterSQL));
+                System.out.printf("trace check index.alter %s.%s no change%n", table, index, alterSQL);
             }
         });
 
@@ -196,8 +199,7 @@ public class SchemaSync {
 
         // drop 外键
 
-
-        return StringUtils.join(alterLines.toArray(new String[0]),",\n");
+        return String.join(ProjectConstant.LINE_JOIN_DELIMITER,alterLines);
     }
 
 }
