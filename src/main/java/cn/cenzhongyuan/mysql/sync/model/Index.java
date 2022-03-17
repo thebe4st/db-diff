@@ -1,7 +1,7 @@
 package cn.cenzhongyuan.mysql.sync.model;
 
 import cn.cenzhongyuan.mysql.sync.consts.ProjectConstant;
-import cn.cenzhongyuan.mysql.sync.enumeration.IndexType;
+import cn.cenzhongyuan.mysql.sync.enums.IndexType;
 import cn.hutool.core.util.StrUtil;
 import com.alibaba.fastjson.JSON;
 import lombok.Data;

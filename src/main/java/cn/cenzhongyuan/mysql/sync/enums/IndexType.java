@@ -1,4 +1,4 @@
-package cn.cenzhongyuan.mysql.sync.enumeration;
+package cn.cenzhongyuan.mysql.sync.enums;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
