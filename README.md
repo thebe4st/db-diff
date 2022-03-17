@@ -1,23 +1,28 @@
-# db-diff
-compare database differences
-normal use it with Flyway
-## quick start
+# DB-DIFF
+
+## 1. Basic Introduction
+
+    Allow you use java code compare the differences between databases and generate SQL statements.
+
+## 2. Getting started
+
 ```java
-    // 生成差异SQL
-    SchemaSyncConfig config = new SchemaSyncConfig();
-    config.setSourceDbUrl("jdbc:mysql://xxx/xxx?useUnicode=true&characterEncoding=UTF-8&zeroDateTimeBehavior=convertToNull&useSSL=false");
-    config.setSourceDbUser("admin");
-    config.setSourceDbPwd("123456");
-    config.setDestDbUrl("jdbc:mysql://xxx/xxx?useUnicode=true&characterEncoding=UTF-8&zeroDateTimeBehavior=convertToNull&useSSL=false");
-    config.setDestDbUser("admin");
-    config.setDestDbPwd("123456");;
+public class Generator {
+    public static void main(String[] args) {
+        Db source = Db.builder()
+                .url("jdbc:mysql://localhost/b?serverTimezone=GMT%2B8&tinyInt1isBit=false&useUnicode=true&characterEncoding=UTF-8&useSSL=false")
+                .user("root")
+                .pwd("pwd")
+                .build();
 
-    String sqlPath = PathKit.getWebRootPath() + "/src/main/resources/db/migration";
-
-
-    SchemaSync schemaSync = new SchemaSync(config);
-    Integer lastVersion = schemaSync.getDestDb().getLastVersion();
-    sqlPath +="/V" + (lastVersion + 1) + "__cust.sql";
-    List<TableAlter> allDiff = schemaSync.getAllDiff();
-    schemaSync.tableAlter2SQLFile(allDiff,sqlPath);
+        Db dest = Db.builder()
+                .url("jdbc:mysql://localhost/a?serverTimezone=GMT%2B8&tinyInt1isBit=false&useUnicode=true&characterEncoding=UTF-8&useSSL=false")
+                .user("root")
+                .pwd("pwd")
+                .build();
+        SchemaSync schemaSync = new SchemaSync(source, dest);
+        System.out.println(schemaSync.differenceSQL()); // get diff sql ~
+    }
+}
 ```
+## 3. Enjoy it
