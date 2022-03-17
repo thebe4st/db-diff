@@ -15,13 +15,13 @@ import java.util.List;
 @Getter
 public class TableAlter {
 
-    private String table;
+    private final String table;
 
     private AlterType alterType;
 
     private String sql;
 
-    private SchemaDiff schema;
+    private final SchemaDiff schema;
 
     public TableAlter(String table) {
         this.table = table;
@@ -67,10 +67,10 @@ public class TableAlter {
             if(destTable.getFields().containsKey(sourceFieldName)) {
                 String destFieldSQL = destTable.getFields().get(sourceFieldName);
                 if(!sourceFieldSQL.equals(destFieldSQL)) {
-                    alterSQL = ConfigHelper.get().getSqlConst().alertTableChangeSubSQL(sourceFieldName,sourceFieldSQL);
+                    alterSQL = ConfigHelper.get().getSqlConst().alertTableChangeFieldSubSQL(sourceFieldName,sourceFieldSQL);
                 }
             } else {
-                alterSQL =  ConfigHelper.get().getSqlConst().alertTableAddSubSQL(sourceFieldSQL);
+                alterSQL =  ConfigHelper.get().getSqlConst().alertTableAddFieldSubSQL(sourceFieldSQL);
             }
             if(StrUtil.isNotBlank(alterSQL)) {
                 log.info("trace check column.alter {}.{} alterSQL= [{}]", tableName, sourceFieldName, alterSQL);
@@ -84,7 +84,7 @@ public class TableAlter {
         if(ConfigHelper.get().isDrop()) {
             destTable.getFields().forEach((name,dest) -> {
                 if(!sourceTable.getFields().containsKey(name)) {
-                    String alterSQL = String.format("drop `%s`", name);
+                    String alterSQL = ConfigHelper.get().getSqlConst().alertTableDelFieldSubSQL(name);
                     alterLines.add(alterSQL);
                     log.info("trace check column.alter {}.{} alterSQL= {}", tableName, name, alterSQL);
                 } else {
@@ -97,7 +97,7 @@ public class TableAlter {
         sourceTable.getIndexAll().forEach((index,idx) -> {
             boolean has = destTable.getIndexAll().containsKey(index);
             Index dIdx = destTable.getIndexAll().get(index);
-            log.info("trace indexName---->[ {}.{} ] dest_has:{}\ndest_idx:{}\nsource_idx:{}", tableName, index, has, dIdx, idx);
+            log.info("trace indexName---->[ {}.{} ] dest_has:[{}],dest_idx:[{}],source_idx:[{}]", tableName, index, has, dIdx, idx);
             String alterSQL = "";
             if(has) {
                 if(!idx.getSql().equals(dIdx.getSql())) {

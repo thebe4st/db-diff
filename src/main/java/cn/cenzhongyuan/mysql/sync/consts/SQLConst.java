@@ -9,7 +9,9 @@ public interface SQLConst {
 
     String alertTable(String tableName, String subSQL);
 
-    String alertTableChangeSubSQL(String fieldName, String subSQL);
+    String alertTableChangeFieldSubSQL(String fieldName, String subSQL);
 
-    String alertTableAddSubSQL(String subSQL);
+    String alertTableAddFieldSubSQL(String subSQL);
+
+    String alertTableDelFieldSubSQL(String subSQL);
 }

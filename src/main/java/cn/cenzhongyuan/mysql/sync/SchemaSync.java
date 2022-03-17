@@ -17,7 +17,7 @@ public class SchemaSync {
 
 
     public SchemaSync(Db source,Db dest) {
-        this(source,dest,false);
+        this(source,dest,true);
     }
 
     public SchemaSync(Db source,Db dest,boolean drop) {

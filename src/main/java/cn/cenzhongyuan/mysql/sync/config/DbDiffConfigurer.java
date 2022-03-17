@@ -6,7 +6,7 @@ import lombok.Data;
 
 @Data
 public class DbDiffConfigurer {
-    private boolean drop = false;
+    private boolean drop = true;
     private Db source;
     private Db dest;
     private SQLConst sqlConst;

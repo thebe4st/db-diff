@@ -23,12 +23,17 @@ public class MysqlSQLConst implements SQLConst {
     }
 
     @Override
-    public String alertTableChangeSubSQL(String fieldName, String subSQL) {
+    public String alertTableChangeFieldSubSQL(String fieldName, String subSQL) {
         return String.format("CHANGE `%s` %s",fieldName,subSQL);
     }
 
     @Override
-    public String alertTableAddSubSQL(String subSQL) {
+    public String alertTableAddFieldSubSQL(String subSQL) {
         return "ADD " + subSQL;
+    }
+
+    @Override
+    public String alertTableDelFieldSubSQL(String subSQL) {
+        return String.format("drop `%s`", subSQL);
     }
 }
