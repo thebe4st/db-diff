@@ -5,12 +5,14 @@ import cn.cenzhongyuan.mysql.sync.enumeration.IndexType;
 import cn.hutool.core.util.StrUtil;
 import com.alibaba.fastjson.JSON;
 import lombok.Data;
+import lombok.extern.slf4j.Slf4j;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+@Slf4j
 @Data
 public class Index {
 
@@ -37,45 +39,45 @@ public class Index {
             return idx;
         }
 
-        if(Pattern.matches(ProjectConstant.INDEX_REG,line)) {
-            String[] arr = StrUtil.split(line, "`");
+        if (Pattern.matches(ProjectConstant.INDEX_REG, line)) {
+            List<String> arr = StrUtil.split(line, "`");
             idx.setIndexType(IndexType.INDEX);
-            idx.setName(arr[1]);
+            idx.setName(arr.get(1));
             return idx;
         }
         Pattern foreignReg = Pattern.compile(ProjectConstant.FOREIGN_REG);
-        Matcher m = foreignReg.matcher(line) ;
-        if(m.find()) {
+        Matcher m = foreignReg.matcher(line);
+        if (m.find()) {
             idx.setIndexType(IndexType.FOREIGN);
             idx.setName(m.group(1));
             idx.addRelationTable(m.group(2));
             return idx;
         }
 
-        System.out.println(String.format("db_index parse failed,unsupported,line: %s", line));
+        log.error("db_index parse failed,unsupported,line: {}", line);
         return null;
     }
 
 
     public String alterAddSql(boolean drop) {
         List<String> alterSQL = new ArrayList<>();
-        if(drop) {
+        if (drop) {
             String dropSQL = this.alterDropSQL();
-            if(StrUtil.isNotBlank(dropSQL)) {
+            if (StrUtil.isNotBlank(dropSQL)) {
                 alterSQL.add(dropSQL);
             }
         }
 
         switch (this.indexType) {
             case PRIMARY:
-                alterSQL.add(String.format("ADD %s",sql));
+                alterSQL.add(String.format("ADD %s", sql));
                 break;
             case FOREIGN:
             case INDEX:
-                alterSQL.add(String.format("ADD %s",sql));
+                alterSQL.add(String.format("ADD %s", sql));
                 break;
             default:
-                System.out.println(String.format("unknow indexType %s", this.indexType));
+               log.error("unknown indexType {}", this.indexType);
         }
         return String.join(ProjectConstant.LINE_JOIN_DELIMITER, alterSQL);
     }
@@ -85,18 +87,18 @@ public class Index {
             case PRIMARY:
                 return "DROP PRIMARY KEY";
             case INDEX:
-                return String.format("DROP INDEX `%s`",this.name);
+                return String.format("DROP INDEX `%s`", this.name);
             case FOREIGN:
-                return String.format("DROP FOREIGN KEY `%s`",this.name);
+                return String.format("DROP FOREIGN KEY `%s`", this.name);
             default:
-                String.format("unknown indexType %s", this.indexType);
+                log.error("unknown indexType {}", this.indexType);
         }
         return "";
     }
 
     public void addRelationTable(String table) {
         table = table.trim();
-        if(StrUtil.isNotBlank(table)) {
+        if (StrUtil.isNotBlank(table)) {
             this.relationTables.add(table);
         }
     }

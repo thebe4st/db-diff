@@ -4,12 +4,14 @@ import cn.cenzhongyuan.mysql.sync.consts.ProjectConstant;
 import cn.cenzhongyuan.mysql.sync.enumeration.AlterType;
 import cn.hutool.core.util.StrUtil;
 import lombok.Data;
+import lombok.extern.slf4j.Slf4j;
 
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+@Slf4j
 @Data
 public class SchemaSync {
 
@@ -151,10 +153,10 @@ public class SchemaSync {
             }
 
             if(StrUtil.isNotBlank(alterSQL)) {
-                System.out.printf("trace check column.alter %s.%s alterSQL= %s%n", table, name, alterSQL);
+                log.info("trace check column.alter {}.{} alterSQL= [{}]", table, name, alterSQL);
                 alterLines.add(alterSQL);
             } else {
-                System.out.printf("trace check column.alter %s.%s no change%n", table, name);
+                log.info("trace check column.alter {}.{} no change", table, name);
             }
         });
 
@@ -164,9 +166,9 @@ public class SchemaSync {
                 if(!sourceMyS.getFields().containsKey(name)) {
                     String alterSQL = String.format("drop `%s`", name);
                     alterLines.add(alterSQL);
-                    System.out.printf("trace check column.alter %s.%s alterSQL= %s%n", table, name, alterSQL);
+                    log.info("trace check column.alter {}.{} alterSQL= {}", table, name, alterSQL);
                 } else {
-                    System.out.printf("trace check column.alter %s.%s no change%n", table, name);
+                    log.info("trace check column.alter {}.{} no change", table, name);
                 }
             });
         }
@@ -175,7 +177,7 @@ public class SchemaSync {
         sourceMyS.getIndexAll().forEach((index,idx) -> {
             boolean has = destMyS.getIndexAll().containsKey(index);
             Index dIdx = destMyS.getIndexAll().get(index);
-            System.out.printf("trace indexName---->[ %s.%s ] dest_has:%s\ndest_idx:%s\nsource_idx:%s%n", table, index, has, dIdx, idx);
+            log.info("trace indexName---->[ {}.{} ] dest_has:{}\ndest_idx:{}\nsource_idx:{}", table, index, has, dIdx, idx);
             String alterSQL = "";
             if(has) {
                 if(!idx.getSql().equals(dIdx.getSql())) {
@@ -186,9 +188,9 @@ public class SchemaSync {
             }
             if(StrUtil.isNotBlank(alterSQL)) {
                 alterLines.add(alterSQL);
-                System.out.printf("trace check index.alter %s.%s alterSQL= %s%n", table, index, alterSQL);
+                log.info("trace check index.alter {}.{} alterSQL= {}", table, index, alterSQL);
             } else {
-                System.out.printf("trace check index.alter %s.%s no change%n", table, index, alterSQL);
+                log.info("trace check index.alter {}.{} no change", table, index);
             }
         });
 

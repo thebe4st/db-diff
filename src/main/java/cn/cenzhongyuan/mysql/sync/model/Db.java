@@ -6,11 +6,14 @@ import cn.cenzhongyuan.mysql.sync.consts.SQLConst;
 import cn.hutool.core.util.StrUtil;
 import lombok.Builder;
 import lombok.Cleanup;
+import lombok.extern.slf4j.Slf4j;
 
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
+@Slf4j
 @Builder
 public class Db {
 
@@ -18,22 +21,22 @@ public class Db {
     private String pwd;
     private String url;
 
-    private SQLConst sqlConst = new MysqlSQLConst();
+    private SQLConst sqlConst;
 
     static {
         try {
             Class.forName(ProjectConstant.DRIVER_CLASS_NAME);
         } catch (ClassNotFoundException e) {
-            e.printStackTrace();
+            log.error("", e);
         }
     }
 
-     public Connection getConnection() {
+    public Connection getConnection() {
         Connection ret = null;
         try {
-            ret = DriverManager.getConnection(this.url,this.user,this.pwd);
+            ret = DriverManager.getConnection(this.url, this.user, this.pwd);
         } catch (SQLException e) {
-            e.printStackTrace();
+            log.error("", e);
         }
         return ret;
     }
@@ -46,13 +49,13 @@ public class Db {
             @Cleanup ResultSet res = null;
             connection = getConnection();
             statement = connection.createStatement();
-            res = statement.executeQuery(sqlConst.tableName());
+            res = statement.executeQuery(sql().tableName());
             while (res.next()) {
                 ResultSetMetaData rsmd = res.getMetaData();
                 ret.add(res.getString(rsmd.getColumnLabel(1)));
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            log.error("", e);
         }
         return ret;
     }
@@ -64,16 +67,23 @@ public class Db {
             @Cleanup ResultSet res = null;
             connection = getConnection();
             statement = connection.createStatement();
-            res = statement.executeQuery(sqlConst.tableSchema(name));
-            if(res.next()) {
+            res = statement.executeQuery(sql().tableSchema(name));
+            if (res.next()) {
                 ResultSetMetaData rsmd = res.getMetaData();
                 return res.getString(rsmd.getColumnLabel(2));
-            }else {
+            } else {
                 throw new RuntimeException(String.format("get table %s 's schema failed", name));
             }
         } catch (SQLException ignored) {
-            System.out.printf("get table %s 's schema failed", name);
+            log.error("get table {} 's schema failed", name);
         }
         return StrUtil.EMPTY;
+    }
+
+    private SQLConst sql() {
+        if (Objects.isNull(this.sqlConst)) {
+            this.sqlConst = new MysqlSQLConst();
+        }
+        return this.sqlConst;
     }
 }
